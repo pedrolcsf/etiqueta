@@ -1,0 +1,14 @@
+{
+  "name": "etiqueta",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "repository": "https://github.com/pedrozez/etiqueta.git",
+  "author": "Pedro Ferreira <pedroferreirazez@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "node-ssh": "^11.1.1"
+  }
+}
