@@ -11,6 +11,8 @@
         "sourceType": "module"
     },
     "rules": {
-        "no-console": "off"
+        "no-console": "off",
+        "eqeqeq": "off",
+        "camelcase": "off"
     }
 }
