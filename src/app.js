@@ -1,26 +1,44 @@
-// Libraries
+//* ************************************************************************** */
+//* ***************************** LIBRARIES ********************************** */
+//* ************************************************************************** */
 const { NodeSSH } = require('node-ssh');
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
 
+require('dotenv').config();
+//* ************************************************************************** */
 const app = express();
 app.use(cors());
+app.use(express.json());
 
+//* ************************************************************************** */
+const ssh = new NodeSSH();
+//* ************************************************************************** */
+//* ********************************* ROTAS ********************************** */
+//* ************************************************************************** */
 app.post('/:printing_type', (req, res) => {
   const { printing_type } = req.params;
-  if (printing_type == '1') {
-    const { code, type, description } = req.query;
 
-    if (code.length === 0 || !code) {
-      res.status(401).json({ error: 'please insert the code' });
-    } else if (type.length === 0 || !type) {
-      res.status(401).json({ error: 'please insert the type' });
-    } else if (description.length === 0 || !type) {
-      res.status(401).json({ error: 'please insert the description' });
-    } else {
-      const ssh = new NodeSSH();
-      const epl = `N\nQ5,20\nD10\nA10,0,0,2,1,1,N,"SELPROM TECNOLOGIA"\nA18,18,0,2,1,1,N,"VARZEA GRANDE - MT"\nA110,45,0,2,1,2,R,"PROTOCOLO GERAL"\nB10,95,0,1,2,4,70,B,"${code}"\nA10,194,0,1,1,1,N,"Código"\nA200,100,0,2,1,1,N,"Data: 16/07/2010"\nA200,125,0,2,1,1,N,"Horario:11:23:05"\nA200,150,0,2,1,1,N,"Resp.: Neusa"\n\nA410,0,0,2,1,1,N,"CAMARA MUNICIPAL DE"\nA418,18,0,2,1,1,N,"VARZEA GRANDE -MT"\nA510,45,0,2,1,2,R,"PROTOCOLO GERAL"\nB410,95,0,1,2,4,70,B,"2011010032"\nA410,1940,1,1,1,N,"Num.de protocolo"\nA600,100,0,2,1,1,N,"Data: 16/07/2010"\nA600,125,0,2,1,1,N,"Horario:11:23:05"\nA600,150,0,2,1,1,N,"Resp.: Neusa"\nP1`;
+  // query params
+  const {
+    code, type, description, code_loc,
+  } = req.query;
+
+  // tratamento de alguns erros
+  if (code.length === 0 || !code) {
+    res.status(401).json({ error: 'please insert the code' });
+  } else if (type.length === 0 || !type) {
+    res.status(401).json({ error: 'please insert the type' });
+  } else if (description.length === 0 || !description) {
+    res.status(401).json({ error: 'please insert the description' });
+  } else if (code_loc.length === 0 || !code_loc) {
+    res.status(401).json({ error: 'please insert the code_loc' });
+  }
+
+  // case print_type
+  switch (printing_type) {
+    case '1':
+      const epl = `N\n\nA20,5,0,3,1,1,N,"${code}"\nA20,30,0,3,1,1,N,"${code}"\nP1`;
 
       ssh.connect({
         host: process.env.SSH_HOST,
@@ -31,10 +49,14 @@ app.post('/:printing_type', (req, res) => {
       });
 
       res.status(200).json({ message: 'successfully printed' });
-    }
+      break;
+
+    default:
+      break;
   }
 });
 
-app.listen(3337, () => {
-  console.log('server starded on port 3337');
+//* ************************************************************************** */
+app.listen(3333, () => {
+  console.log('server starded on port 3333');
 });

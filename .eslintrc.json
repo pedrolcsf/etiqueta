@@ -13,6 +13,7 @@
     "rules": {
         "no-console": "off",
         "eqeqeq": "off",
-        "camelcase": "off"
+        "camelcase": "off",
+        "no-case-declarations": "off"
     }
 }
