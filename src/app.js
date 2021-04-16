@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 //* ************************************************************************** */
-const ssh = new NodeSSH();
+
 //* ************************************************************************** */
 //* ********************************* ROTAS ********************************** */
 //* ************************************************************************** */
@@ -20,7 +20,7 @@ app.post('/:printing_type', (req, res) => {
   const { printing_type } = req.params;
 
   // query params
-  const {
+  let {
     code, type, description, code_loc,
   } = req.query;
 
@@ -38,25 +38,25 @@ app.post('/:printing_type', (req, res) => {
   // case print_type
   switch (printing_type) {
     case '1':
-      const epl = `N\n\nA20,5,0,3,1,1,N,"${code}"\nA20,30,0,3,1,1,N,"${code}"\nP1`;
-
+      const epl = `N\n\nA20,5,0,3,1,1,N,"${code}"\nA20,30,0,3,1,1,N,"222"\nP1`;
+      const ssh = new NodeSSH();
       ssh.connect({
         host: process.env.SSH_HOST,
         username: process.env.SSH_USER,
         password: process.env.SSH_PASSWORD,
       }).then(() => {
         ssh.execCommand(`echo '${epl}' > /dev/usb/lp0`);
+
+        res.status(200).json({ message: 'successfully printed' });
       });
 
-      res.status(200).json({ message: 'successfully printed' });
       break;
-
     default:
       break;
   }
 });
 
 //* ************************************************************************** */
-app.listen(3333, () => {
-  console.log('server starded on port 3333');
+app.listen(3337, () => {
+  console.log('server starded on port 3337');
 });
