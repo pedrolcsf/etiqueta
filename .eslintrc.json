@@ -15,6 +15,10 @@
         "eqeqeq": "off",
         "camelcase": "off",
         "no-case-declarations": "off",
-        "prefer-const":"off"
+        "prefer-const":"off",
+        "no-var": "off",
+        "vars-on-top": "off",
+        "max-len": "off",
+        "no-unused-vars": "off"
     }
 }
