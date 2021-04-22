@@ -51,7 +51,7 @@ app.post('/:printing_type', (req, res) => {
               throw err;
             }
             if (rows.length === 0) {
-              epl = `A020,6,0,4,0,1,N,"Cd:${code.substring(0, 18)}"\nA020,35,0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\nA020,64,0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `A020,93,0,4,0,1,N,"${description.substring(18, 42)}"\nA020,122,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `A020,93,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
+              epl += `A020,6,0,4,0,1,N,"Cd:${code.substring(0, 18)}"\nA020,35,0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\nA020,64,0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `A020,93,0,4,0,1,N,"${description.substring(18, 42)}"\nA020,122,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `A020,93,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
             } else {
               var items = [];
               rows.forEach((row, i) => {
@@ -68,7 +68,7 @@ app.post('/:printing_type', (req, res) => {
           username: process.env.SSH_USER,
           password: process.env.SSH_PASSWORD,
         }).then(() => {
-          ssh.execCommand(`echo 'N\n${epl}P1' > /dev/usb/lp0`);
+          ssh.execCommand(`echo '${epl}P1' > /dev/usb/lp0`);
 
           res.status(200).json({ message: 'successfully printed' });
         });
@@ -86,7 +86,6 @@ app.post('/:printing_type', (req, res) => {
             rows.forEach((row, i) => {
               items.push(row);
             });
-
             if (items.length === 0) {
               epl = `A020,6,0,4,0,1,N,"Cd:${code.substring(0, 18)}"\nA020,35,0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\nA020,64,0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `A020,93,0,4,0,1,N,"${description.substring(18, 42)}"\nA020,122,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `A20,93,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
 
