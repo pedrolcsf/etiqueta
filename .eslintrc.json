@@ -17,6 +17,7 @@
         "no-case-declarations": "off",
         "prefer-const":"off",
         "no-var": "off",
+        "consistent-return": "off",
         "vars-on-top": "off",
         "max-len": "off",
         "no-unused-vars": "off"

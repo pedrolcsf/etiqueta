@@ -4,6 +4,7 @@
 const { NodeSSH } = require('node-ssh');
 const express = require('express');
 const cors = require('cors');
+const { response } = require('express');
 const sqlite3 = require('sqlite3').verbose();
 
 const db = new sqlite3.Database('./db/sample.db');
@@ -44,7 +45,23 @@ app.post('/:printing_type', (req, res) => {
   switch (printing_type) {
     case '2':
       if (go == 1) {
-        epl = `A452,6,0,4,0,1,N,"Cd:${code.substring(0, 18)}"\nA452,35,0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\nA452,64,0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `A452,93,0,4,0,1,N,"${description.substring(18, 42)}"\nA452,122,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `A452,93,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
+        db.serialize(async () => {
+          await db.all('SELECT * FROM etiqueta', [], (err, rows) => {
+            if (err) {
+              throw err;
+            }
+            if (rows.length === 0) {
+              epl = `A020,6,0,4,0,1,N,"Cd:${code.substring(0, 18)}"\nA020,35,0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\nA020,64,0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `A020,93,0,4,0,1,N,"${description.substring(18, 42)}"\nA020,122,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `A020,93,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
+            } else {
+              var items = [];
+              rows.forEach((row, i) => {
+                epl += row.etiquetas;
+                console.log(`i: ${i}`);
+              });
+            }
+          });
+          await db.run('DELETE FROM etiqueta');
+        });
 
         ssh.connect({
           host: process.env.SSH_HOST,
@@ -57,9 +74,33 @@ app.post('/:printing_type', (req, res) => {
         });
       } else {
         // Fila
-        epl = `A20,6,0,4,0,1,N,"Cd:${code.substring(0, 18)}"\nA20,35,0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\nA20,64,0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `A20,93,0,4,0,1,N,"${description.substring(18, 42)}"\nA20,122,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `A20,93,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
-        db.run('CREATE TABLE etiqueta(etiquetas)');
-        db.close();
+        db.serialize(async () => {
+          await db.run('CREATE TABLE IF NOT EXISTS etiqueta (etiquetas text)');
+          await db.all('SELECT * FROM etiqueta', [], (err, rows) => {
+            if (err) {
+              throw err;
+            }
+            // console.log(rows.length);
+
+            var items = [];
+            rows.forEach((row, i) => {
+              items.push(row);
+            });
+
+            if (items.length === 0) {
+              epl = `A020,6,0,4,0,1,N,"Cd:${code.substring(0, 18)}"\nA020,35,0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\nA020,64,0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `A020,93,0,4,0,1,N,"${description.substring(18, 42)}"\nA020,122,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `A20,93,0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
+
+              db.run(`INSERT INTO etiqueta(etiquetas) VALUES('${epl}')`);
+              return res.status(201).json({ message: 'added a first row' });
+            }
+            var etiqueta = items[items.length !== 0 && items.length - 1];
+            var last_line = String(etiqueta.etiquetas).split(',');
+            // console.log(last_line[22]); // 1 - 8 - 15 - 22
+            epl = `${last_line[0] === 'A020' ? 'A452' : 'A020'},${rows.length % 2 === 0 ? `${Number(last_line[1]) + 260}` : `${last_line[1]}`},0,4,0,1,N,"Cd:${code.substring(0, 18)}"\n${last_line[0] === 'A020' ? 'A452' : 'A020'},${items.length % 2 === 0 ? `${Number(last_line[8]) + 260}` : `${last_line[8]}`},0,4,0,1,N,"Tipo:${type.substring(0, 18)}"\n${last_line[0] === 'A020' ? 'A452' : 'A020'},${items.length % 2 === 0 ? `${Number(last_line[15]) + 260}` : `${last_line[15]}`},0,4,0,1,N,"Desc:${description.substring(0, 18)}"\n${description.length > 18 ? `${last_line[0] === 'A020' ? 'A452' : 'A020'},${items.length % 2 === 0 ? `${Number(last_line[22]) + 260}` : `${last_line[22]}`},0,4,0,1,N,"${description.substring(18, 42)}"\n${last_line[0] === 'A020' ? 'A452' : 'A020'},${items.length % 2 === 0 ? `${Number(last_line[22]) + 260 + 29}` : `${Number(last_line[22]) + 29}`},0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n` : `${last_line[0] === 'A020' ? 'A452' : 'A020'},${items.length % 2 === 0 ? `${Number(last_line[22]) + 260}` : `${last_line[22]}`},0,4,0,1,N,"Loc:${code_loc.substring(0, 18)}"\n`}`;
+            db.run(`INSERT INTO etiqueta(etiquetas) VALUES('${epl}')`);
+            return res.status(201).json({ message: 'added a row' });
+          });
+        });
       }
       break;
     case '3':
